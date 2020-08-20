@@ -89,6 +89,8 @@ class CPU:
         MUL = 0b10100010
         PUSH = 0b01000101
         POP = 0b01000110
+        CALL = 0b01010000
+        RET = 0b00010001
 
         running = True
         pc_count = 0
@@ -96,6 +98,7 @@ class CPU:
 
         while running:
             cmd = self.ram[pc]
+            pc_count = ((cmd >> 6) & 0b11) + 1
 
             if cmd == LDI:
                 the_register = self.ram[pc + 1]
@@ -149,5 +152,26 @@ class CPU:
                 self.registers[SP] += 1
 
                 pc_count = 2
+
+
+            # CALL
+            elif cmd == CALL:
+                # push the return address on to the stack
+                self.registers[SP] -= 1
+                self.ram[self.registers[SP]] = pc + 2
+
+                # Set the PC to the subroutines address
+                reg = self.ram[pc + 1]
+                pc = self.registers[reg]
+
+                pc_count = 0
+
+            # RET
+            elif cmd == RET:
+                # POP return address from stack to store in pc
+                pc = self.ram[self.registers[SP]]
+                self.registers[SP] += 1
+
+                pc_count = 0
 
             pc += pc_count
