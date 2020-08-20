@@ -7,11 +7,12 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.ram = []
+        self.ram = [0] * 256
         self.registers = [0] * 8
 
     def load(self, file):
         """Load a program into memory."""
+        address = 0
         with open(file) as f:
             for line in f:
                 comment_split = line.split("#")
@@ -22,7 +23,8 @@ class CPU:
             
                 x = int(n, 2)
 
-                self.ram.append(x)
+                self.ram[address] = x
+                address += 1
         
 
         # For now, we've just hardcoded a program:
@@ -78,10 +80,15 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
+        SP = 7
+        self.registers[SP] = 244
+
         HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
+        PUSH = 0b01000101
+        POP = 0b01000110
 
         running = True
         pc_count = 0
@@ -113,5 +120,34 @@ class CPU:
                 value2 = self.registers[the_register2]
                 self.alu("MUL", the_register1, the_register2)
                 pc_count = 3
+
+
+             # PUSH
+            elif cmd == PUSH:
+                # setup
+                reg_index = self.ram[pc + 1]
+                val = self.registers[reg_index]
+
+                # decrememt Stack Pointer
+                self.registers[SP] -= 1
+
+                # insert val on to the stack
+                self.ram[self.registers[SP]] = val
+
+                pc_count = 2
+
+            # TODO: POP
+            elif cmd == POP:
+                # setup
+                reg_index = self.ram[pc + 1]
+                val = self.ram[self.registers[SP]]
+
+                # take value from stack and put it in reg
+                self.registers[reg_index] = val
+
+                # increment Stack Pointer
+                self.registers[SP] += 1
+
+                pc_count = 2
 
             pc += pc_count
